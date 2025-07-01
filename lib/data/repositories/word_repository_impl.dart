@@ -1,83 +1,59 @@
-// lib/data/repositories/word_repository_impl.dart
-
+import 'package:hive/hive.dart';
 import '../models/word.dart';
-import '../models/word_definition.dart';
+import '/../models/word_card.dart';
+import '../models/word_definition.dart'; // ایمپورت این فایل فراموش نشود
 import 'word_repository.dart';
 
-/// این کلاس، پیاده‌سازی واقعی "قرارداد" WordRepository است.
-/// در حال حاضر از داده‌های ساختگی استفاده می‌کند تا بتوانیم UI را توسعه دهیم.
-/// در آینده، منطق اتصال به سرور و دیتابیس محلی به اینجا اضافه خواهد شد.
 class WordRepositoryImpl implements WordRepository {
+  final Box<WordCard> _wordBox;
 
-  // یک دیتابیس ساختگی و موقت برای شبیه‌سازی داده‌ها
-  final Map<int, Word> _fakeDatabase = {
-    1: const Word(
-      id: 1,
-      text: 'ubiquitous',
-      phonetic: '/juːˈbɪkwɪtəs/',
-      audioUrl: null, // فعلا فایل صوتی نداریم
-      difficultyLevel: 5,
-      definitions: [
-        WordDefinition(
-          partOfSpeech: 'adjective',
-          definition: 'present, appearing, or found everywhere.',
-          example: 'His ubiquitous influence was felt by all the family.',
-        ),
-      ],
-    ),
-    2: const Word(
-      id: 2,
-      text: 'ephemeral',
-      phonetic: '/ɪˈfemərəl/',
-      audioUrl: null,
-      difficultyLevel: 4,
-      definitions: [
-        WordDefinition(
-          partOfSpeech: 'adjective',
-          definition: 'lasting for a very short time.',
-          example: 'Fashions are ephemeral.',
-        ),
-      ],
-    ),
-    3: const Word(
-      id: 3,
-      text: 'eloquent',
-      phonetic: '/ˈeləkwənt/',
-      audioUrl: null,
-      difficultyLevel: 3,
-      definitions: [
-        WordDefinition(
-          partOfSpeech: 'adjective',
-          definition: 'fluent or persuasive in speaking or writing.',
-          example: 'An eloquent speech.',
-        ),
-      ],
-    )
-  };
+  WordRepositoryImpl(this._wordBox);
 
   @override
-  Future<Word> getWordDetails(int wordId) async {
-    // شبیه‌سازی یک تاخیر شبکه (مثلاً ۱ ثانیه)
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (_fakeDatabase.containsKey(wordId)) {
-      return _fakeDatabase[wordId]!;
-    } else {
-      // در دنیای واقعی، اینجا یک خطای "پیدا نشد" برمی‌گردانیم.
-      throw Exception('Word not found with id: $wordId');
-    }
+  Future<void> addWord(WordCard card) async {
+    await _wordBox.put(card.id, card);
   }
 
   @override
-  Future<List<Word>> getWordsByLevel(int level) async {
-    // شبیه‌سازی یک تاخیر شبکه
-    await Future.delayed(const Duration(milliseconds: 800));
+  Future<List<WordCard>> getAllWords() async {
+    return _wordBox.values.toList();
+  }
 
-    // لغاتی که سطح سختی آنها با سطح درخواستی برابر است را فیلتر می‌کنیم.
-    final words = _fakeDatabase.values
-        .where((word) => word.difficultyLevel == level)
-        .toList();
+  @override
+  Future<void> updateWord(WordCard card) async {
+    await _wordBox.put(card.id, card);
+  }
 
-    return words;
+  @override
+  Future<Word> getWordDetails(String wordId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final card = _wordBox.get(wordId);
+
+    if (card != null) {
+      // این بخش برای هماهنگی با تمام مدل‌های شما بازنویسی شده است
+      return Word(
+        // مدیریت عدم تطابق نوع id:
+        // چون id یک رشته UUID است، هش‌کد آن را به عنوان int ارسال می‌کنیم.
+        id: card.id.hashCode,
+
+        // پارامترهای الزامی کلاس Word
+        text: card.word,
+        phonetic: '/fəˈnetɪk/',
+        difficultyLevel: card.repetitionLevel, // استفاده از سطح تکرار کارت
+
+        // پارامتر الزامی definitions که یک لیست است
+        definitions: [
+          WordDefinition(
+            partOfSpeech: 'unknown',
+            // ** این خط اصلاح شده است **
+            definition: card.meaning, // 'definition' به جای 'text'
+            example: card.exampleSentence,
+          ),
+        ],
+      );
+    } else {
+      // اگر کارتی با این id پیدا نشد، یک خطا پرتاب می‌کنیم.
+      throw Exception('Word with id $wordId not found.');
+    }
   }
 }

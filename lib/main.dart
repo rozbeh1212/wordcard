@@ -1,115 +1,72 @@
 import 'package:english_learning_app/models/word_card.dart';
-import 'package:english_learning_app/ui/screens/add_edit_card_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart' as path_provider;
+import 'locator.dart'; // سرویس locator برای تزریق وابستگی
+import 'ui/screens/word_list_screen.dart'; // صفحه اصلی استاندارد برنامه
 
+/// تابع اصلی برنامه که نقطه شروع همه چیز است.
+/// ترتیب اجرای دستورات در این تابع بسیار حیاتی است.
+void main() async {
+  // گام ۱: اطمینان از راه‌اندازی ابزارهای پایه‌ای فلاتر قبل از هر کار دیگری.
+  // این خط برای اجرای کدهای async قبل از runApp ضروری است.
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
+  // گام ۲: راه‌اندازی کامل دیتابیس Hive.
+  final appDocumentDir = await path_provider.getApplicationDocumentsDirectory();
+  await Hive.initFlutter(appDocumentDir.path);
+  Hive.registerAdapter(WordCardAdapter()); // ثبت آداپتور مدل WordCard
+  await Hive.openBox<WordCard>('word_cards'); // باکس باید قبل از استفاده باز شود
+
+  // گام ۳: راه‌اندازی Locator (بعد از اینکه Hive کاملاً آماده شد).
+  // این کار وابستگی‌ها (مانند ریپازیتوری) را در کل برنامه در دسترس قرار می‌دهد.
+  setupLocator();
+
+  // گام ۴: اجرای ویجت ریشه و شروع برنامه.
   runApp(const MyApp());
 }
 
+/// ویجت اصلی و ریشه‌ی برنامه.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'WordCard',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      title: 'Leitner Box',
+      // این بنر کوچک "DEBUG" را از گوشه صفحه حذف می‌کند.
       debugShowCheckedModeBanner: false,
+      
+      // تعریف تم کلی و استایل‌های برنامه
+      theme: ThemeData(
+        primarySwatch: Colors.indigo,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        scaffoldBackgroundColor: Colors.grey.shade100,
+        
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+          elevation: 2,
+        ),
+        
+        // استفاده از شیء داده صحیح (CardThemeData) برای تعریف تم کارت‌ها
+        cardTheme: CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        ),
+
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      
+      // نقطه شروع رابط کاربری برنامه، WordListScreen است.
+      // این صفحه از معماری صحیح BLoC/Cubit پیروی می‌کند.
       home: const WordListScreen(),
-    );
-  }
-}
-
-class WordListScreen extends StatefulWidget {
-  const WordListScreen({super.key});
-
-  @override
-  State<WordListScreen> createState() => _WordListScreenState();
-}
-
-class _WordListScreenState extends State<WordListScreen> {
-  // لیست داده های آزمایشی (Dummy Data)
-  // در فایل lib/main.dart، داخل کلاس _WordListScreenState
-
-final List<WordCard> _wordCards = [
-  WordCard(
-    id: '1',
-    word: 'Persevere',
-    meaning: 'استقامت کردن',
-    // ... سایر فیلدها
-    lastReviewDate: DateTime.now().toIso8601String(),
-    nextReviewDate: DateTime.now().add(const Duration(days: 1)).toIso8601String(),
-  ),
-  WordCard(
-    id: '2',
-    word: 'Eloquent',
-    meaning: 'شیوا، فصیح',
-    // ... سایر فیلدها
-    lastReviewDate: DateTime.now().toIso8601String(),
-    nextReviewDate: DateTime.now().add(const Duration(days: 1)).toIso8601String(),
-  ),
-];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('WordCard'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: ListView.builder(
-        itemCount: _wordCards.length,
-        itemBuilder: (context, index) {
-          final card = _wordCards[index];
-          // --- این بخش تغییر کرده است ---
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
-            child: Card(
-              elevation: 3.0,
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                title: Text(
-                  card.word,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                subtitle: Text(
-                  card.meaning,
-                  style: const TextStyle(fontSize: 14),
-                ),
-                onTap: () {
-                  print('Tapped on ${card.word}');
-                },
-              ),
-            ),
-          );
-          // --- پایان بخش تغییر یافته ---
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async { // ۱. متد را async می کنیم تا بتوانیم منتظر نتیجه بمانیم
-  // ۲. فایل صفحه جدید را import کنید
-  // import 'package:wordcard/screens/add_edit_card_screen.dart';
-  
-  final result = await Navigator.of(context).push<WordCard>(
-    MaterialPageRoute(
-      builder: (ctx) => const AddEditCardScreen(),
-    ),
-  );
-
-  // ۳. اگر کاربر کارتی را ذخیره کرده و برگشته باشد
-  if (result != null) {
-    setState(() { // ۴. برای بروزرسانی UI
-      _wordCards.insert(0, result); // ۵. کارت جدید را به ابتدای لیست اضافه می کنیم
-    });
-  }
-},
-        tooltip: 'Add Card',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

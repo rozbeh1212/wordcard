@@ -21,13 +21,11 @@ class WordCard {
   @HiveField(4)
   int repetitionLevel; 
 
-  // --- تغییر کلیدی اینجاست ---
   @HiveField(5)
-  String nextReviewDate; // از DateTime به String تغییر کرد
+  String nextReviewDate; // تاریخ به صورت String (ISO 8601 format)
 
   @HiveField(6)
-  String lastReviewDate; // از DateTime به String تغییر کرد
-  // --- پایان بخش تغییر یافته ---
+  String lastReviewDate; // تاریخ به صورت String (ISO 8601 format)
 
   WordCard({
     required this.id,
@@ -38,4 +36,25 @@ class WordCard {
     required this.nextReviewDate,
     required this.lastReviewDate,
   });
+
+  // متد کمکی برای ایجاد کپی از شی با مقادیر جدید
+  WordCard copyWith({
+    String? id,
+    String? word,
+    String? meaning,
+    String? exampleSentence,
+    int? repetitionLevel,
+    String? nextReviewDate,
+    String? lastReviewDate,
+  }) {
+    return WordCard(
+      id: id ?? this.id,
+      word: word ?? this.word,
+      meaning: meaning ?? this.meaning,
+      exampleSentence: exampleSentence ?? this.exampleSentence,
+      repetitionLevel: repetitionLevel ?? this.repetitionLevel,
+      nextReviewDate: nextReviewDate ?? this.nextReviewDate,
+      lastReviewDate: lastReviewDate ?? this.lastReviewDate,
+    );
+  }
 }

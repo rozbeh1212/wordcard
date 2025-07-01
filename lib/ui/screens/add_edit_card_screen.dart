@@ -1,77 +1,102 @@
-// lib/screens/add_edit_card_screen.dart
-import 'package:english_learning_app/models/word_card.dart';
+// lib/ui/screens/add_edit_card_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart'; // پکیجی برای ساخت ID منحصر به فرد
+import 'package:english_learning_app/models/word_card.dart';
+import 'package:uuid/uuid.dart';
+
 class AddEditCardScreen extends StatefulWidget {
-  const AddEditCardScreen({super.key});
+  // **اصلاحیه ۱: پارامتر کارت، دیگر الزامی نیست**
+  final WordCard? card;
+
+  const AddEditCardScreen({
+    super.key,
+    this.card, // کلمه کلیدی required حذف شد
+  });
 
   @override
   State<AddEditCardScreen> createState() => _AddEditCardScreenState();
 }
 
 class _AddEditCardScreenState extends State<AddEditCardScreen> {
-  // ۱. کنترل کننده ها برای دسترسی به متن داخل فیلدها
-  final _wordController = TextEditingController();
-  final _meaningController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _wordController;
+  late TextEditingController _meaningController;
+  late bool _isEditing;
 
-  // ۲. متد برای ذخیره کردن کارت
-  void _saveCard() {
-    // اطمینان از اینکه فیلدها خالی نیستند
-    if (_wordController.text.isEmpty || _meaningController.text.isEmpty) {
-      return; // اگر خالی بود، کاری نکن
+  @override
+  void initState() {
+    super.initState();
+    // **اصلاحیه ۲: تشخیص حالت ویرایش یا افزودن**
+    _isEditing = widget.card != null;
+
+    // اگر در حالت ویرایش هستیم، فیلدها را با مقادیر کارت پر کن
+    _wordController = TextEditingController(text: _isEditing ? widget.card!.word : '');
+    _meaningController = TextEditingController(text: _isEditing ? widget.card!.meaning : '');
+  }
+
+  @override
+  void dispose() {
+    _wordController.dispose();
+    _meaningController.dispose();
+    super.dispose();
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      final now = DateTime.now().toIso8601String();
+      
+      final resultCard = _isEditing
+          // حالت ویرایش: کارت موجود را با مقادیر جدید به‌روزرسانی کن
+          ? widget.card!.copyWith(
+              word: _wordController.text.trim(),
+              meaning: _meaningController.text.trim(),
+            )
+          // حالت افزودن: یک کارت کاملاً جدید با یک id جدید بساز
+          : WordCard(
+              id: const Uuid().v4(),
+              word: _wordController.text.trim(),
+              meaning: _meaningController.text.trim(),
+              repetitionLevel: 0,
+              lastReviewDate: now,
+              nextReviewDate: now,
+            );
+      
+      // کارت جدید یا ویرایش‌شده را به صفحه قبل برگردان
+      Navigator.of(context).pop(resultCard);
     }
-
-    // ۳. ساخت یک نمونه کارت جدید با داده های فرم
-    // در فایل lib/screens/add_edit_card_screen.dart، داخل متد _saveCard
-
-final newCard = WordCard(
-  id: const Uuid().v4(),
-  word: _wordController.text,
-  meaning: _meaningController.text,
-  // این دو خط تغییر کرده اند
-  lastReviewDate: DateTime.now().toIso8601String(), 
-  nextReviewDate: DateTime.now().toIso8601String(),
-);
-
-    // ۴. بازگشت به صفحه قبل و ارسال کارت جدید به عنوان نتیجه
-    Navigator.of(context).pop(newCard);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Card'),
-        actions: [
-          // ۵. دکمه ذخیره در اپ بار
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _saveCard,
-          ),
-        ],
+        // **اصلاحیه ۳: عنوان داینامیک**
+        title: Text(_isEditing ? 'Edit Card' : 'Add New Card'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // ۶. فیلد ورودی برای لغت
-            TextField(
-              controller: _wordController,
-              decoration: const InputDecoration(
-                labelText: 'Word',
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _wordController,
+                decoration: const InputDecoration(labelText: 'Word'),
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter a word' : null,
               ),
-            ),
-            const SizedBox(height: 16),
-            // ۷. فیلد ورودی برای معنی
-            TextField(
-              controller: _meaningController,
-              decoration: const InputDecoration(
-                labelText: 'Meaning',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _meaningController,
+                decoration: const InputDecoration(labelText: 'Meaning'),
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter a meaning' : null,
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _submitForm,
+                child: Text(_isEditing ? 'Save Changes' : 'Add Card'),
+              ),
+            ],
+          ),
         ),
       ),
     );
