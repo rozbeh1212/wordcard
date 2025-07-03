@@ -10,5 +10,6 @@ abstract class WordRepository {
   Future<List<WordCard>> getAllWords();
   Future<void> addWord(WordCard card);
   Future<void> updateWord(WordCard card);
+  Future<void> deleteWord(String cardId); // Added this line
   Future<Word> getWordDetails(String wordId);
 }

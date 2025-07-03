@@ -1,12 +1,12 @@
 import 'package:english_learning_app/data/repositories/word_repository.dart';
 import 'package:english_learning_app/models/word_card.dart';
-import 'package:english_learning_app/data/repositories/card_repository.dart';
+// Removed: import 'package:english_learning_app/data/repositories/card_repository.dart';
 import 'package:english_learning_app/logic/review/review_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // lib/logic/review/review_cubit.dart
 
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'review_state.dart';
+// Removed duplicate: import 'package:flutter_bloc/flutter_bloc.dart';
+// Removed duplicate: import 'review_state.dart';
 
 class ReviewCubit extends Cubit<ReviewState> {
   final WordRepository _wordRepository;

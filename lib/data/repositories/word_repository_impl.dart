@@ -25,6 +25,11 @@ class WordRepositoryImpl implements WordRepository {
   }
 
   @override
+  Future<void> deleteWord(String cardId) async {
+    await _wordBox.delete(cardId);
+  }
+
+  @override
   Future<Word> getWordDetails(String wordId) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final card = _wordBox.get(wordId);

@@ -1,17 +1,16 @@
 // lib/ui/screens/word_list_screen.dart
 
-import 'package:english_learning_app/data/repositories/card_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../data/repositories/word_repository.dart'; // از اینترفیس درست استفاده کن
-import '../../logic/review/review_cubit.dart';
+import '../../data/repositories/word_repository.dart'; // Correct interface
+// import '../../logic/review/review_cubit.dart'; // Not directly used here for BlocProvider
 import '../../logic/word_list/word_list_cubit.dart';
 import '../../logic/word_list/word_list_state.dart';
 import '../../models/word_card.dart';
-import '../../locator.dart'; // فرض بر اینکه locator شما اینجاست
+import '../../locator.dart';
 import 'add_edit_card_screen.dart';
 import 'review_screen.dart';
-import 'widgets/word_card.dart' as custom;
+import 'widgets/word_card.dart' as custom; // Assuming this widget is correctly named and used
 
 class WordListScreen extends StatelessWidget {
   const WordListScreen({super.key});
@@ -19,8 +18,7 @@ class WordListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // ** اصلاحیه ۱: استفاده از نام صحیح ریپازیتوری **
-      create: (context) => WordListCubit(locator<WordRepository>() as CardRepository)..loadCards(),
+      create: (context) => WordListCubit(locator<WordRepository>())..loadWordCards(), // Corrected Cubit instantiation and method call
       child: Scaffold(
         appBar: AppBar(
           title: const Text('My Word Cards'),
@@ -78,7 +76,8 @@ class WordListScreen extends StatelessWidget {
           
 
             if (newCard != null && context.mounted) {
-              context.read<WordListCubit>().addCard(newCard);
+              // Call the updated method name in WordListCubit
+              context.read<WordListCubit>().addWordCard(newCard);
             }
           },
           child: const Icon(Icons.add),
